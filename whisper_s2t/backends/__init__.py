@@ -111,7 +111,7 @@ class WhisperModel(ABC):
         pass
         
     @torch.no_grad()
-    def transcribe(self, audio_files, lang_codes=None, tasks=None, initial_prompts=None, batch_size=8):
+    def transcribe(self, audio_files, lang_codes=None, tasks=None, initial_prompts=None, batch_size=8, tqdm_leave=True, tqdm_desc="Transcribing"):
         
         # if lang_codes == None:
         #     lang_codes = len(audio_files)*['en']
@@ -137,7 +137,7 @@ class WhisperModel(ABC):
         responses = [[] for _ in audio_files]
         
         pbar_pos = 0
-        with tqdm(total=len(audio_files)*100, desc=f"Transcribing") as pbar:
+        with tqdm(total=len(audio_files)*100, desc=tqdm_desc, leave=leave) as pbar:
             for signals, prompts, seq_len, seg_metadata, pbar_update in self.data_loader(audio_files, lang_codes, tasks, initial_prompts, batch_size=batch_size, use_vad=False):
                 mels, seq_len = self.preprocessor(signals, seq_len)
                 res = self.generate_segment_batched(mels.to(self.device), prompts, seq_len, seg_metadata)
@@ -156,7 +156,7 @@ class WhisperModel(ABC):
         return responses
 
     @torch.no_grad()
-    def transcribe_with_vad(self, audio_files, lang_codes=None, tasks=None, initial_prompts=None, batch_size=8):
+    def transcribe_with_vad(self, audio_files, lang_codes=None, tasks=None, initial_prompts=None, batch_size=8, tqdm_leave=True, tqdm_desc="Transcribing"):
 
         lang_codes = fix_batch_param(lang_codes, 'en', len(audio_files))
         tasks = fix_batch_param(tasks, 'transcribe', len(audio_files))
@@ -165,7 +165,7 @@ class WhisperModel(ABC):
         responses = [[] for _ in audio_files]
         
         pbar_pos = 0
-        with tqdm(total=len(audio_files)*100, desc=f"Transcribing") as pbar:
+        with tqdm(total=len(audio_files)*100, desc=tqdm_desc, leave=tqdm_leave) as pbar:
             for signals, prompts, seq_len, seg_metadata, pbar_update in self.data_loader(audio_files, lang_codes, tasks, initial_prompts, batch_size=batch_size):
                 mels, seq_len = self.preprocessor(signals, seq_len)
                 res = self.generate_segment_batched(mels.to(self.device), prompts, seq_len, seg_metadata)

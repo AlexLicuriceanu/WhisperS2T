@@ -71,7 +71,8 @@ class FrameVAD(VADBaseClass):
 
         return input_signal, input_signal_length
 
-    @torch.cuda.amp.autocast()
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    @torch.amp.autocast(device_type="cuda")
     @torch.no_grad()
     def forward(self, input_signal, input_signal_length):
         
